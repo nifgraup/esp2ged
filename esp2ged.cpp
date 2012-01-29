@@ -1,4 +1,4 @@
-#define version 0.2
+#define version 0.3
 /*
     esp2ged #version
 
@@ -63,8 +63,7 @@ struct menn_type
     int yngrasyst;//#MENN
     int por, barnifjolsk; //#POR
     int texti;//#TEXTAR
-};
-menn_type* menn;
+} *menn;
 int nmenn=0;
 
 struct por_type
@@ -73,35 +72,40 @@ struct por_type
     int karl, kona, elstabarn; //#MENN
     char hjusk; //hjúskaparstaða
     dags_type hdag; //dagsetning hjúsk.
-};
-por_type* por;
+} *por;
 int npor=0;
 
 struct textar_type
 {
     char* lina;
     int framhald;
-};
-textar_type* textar;
+} *textar;
 int ntextar=0;
 void printText(char* tag, ostream &file, int &texti, int &textiOffset, unsigned char merki)
 {
     if((unsigned char)textar[texti].lina[textiOffset] == merki)
     {
-        textiOffset++;
-        file << "1 " << tag << " ";
+        if(++textiOffset == 20)
+        {
+            texti = textar[texti].framhald;
+            textiOffset = 0;
+        }
+        file << tag << " ";
         while((unsigned char)textar[texti].lina[textiOffset] != merki+1)
         {
             file << textar[texti].lina[textiOffset];
-            textiOffset++;
-            if(textiOffset == 20)
+            if(++textiOffset == 20)
             {
                 texti = textar[texti].framhald;
                 textiOffset = 0;
             }
         }
         file << endl;
-        textiOffset++;
+        if(++textiOffset == 20)
+        {
+            texti = textar[texti].framhald;
+            textiOffset = 0;
+        }
     }
 }
 /*  </DATA>  */
@@ -117,12 +121,12 @@ bool file_handler(char* filename, int blocksize, void handle_init(int), void han
   ifstream file (tmpfilename, ios::in|ios::binary|ios::ate);
   if (file.is_open())
   {
-    int size = file.tellg();
+    int filesize = file.tellg();
 
-    handle_init(size/blocksize);
+    handle_init(filesize/blocksize);
 
     char *lina = new char[blocksize];
-    for(int seek = 0; seek < size; seek+=blocksize)
+    for(int seek = 0; seek < filesize; seek+=blocksize)
     {
         file.seekg (seek, ios::beg);
         file.read (lina, blocksize);
@@ -132,6 +136,8 @@ bool file_handler(char* filename, int blocksize, void handle_init(int), void han
         ++datacount;
     }
     delete lina;
+//      TODO test this with valgrind
+//    delete [] lina;
     file.close();
   }
   else
@@ -173,10 +179,7 @@ void read_menn_init(int length)
 }
 void read_menn(const char* lina)
 {
-    if(lina[0] == 'M')
-        menn[nmenn].kyn = lina[0];
-    else
-        menn[nmenn].kyn = 'F';
+    menn[nmenn].kyn = lina[0]; // 'M' eða 'F'
 
     menn[nmenn].snafn1 = 256*(unsigned char)lina[1]+(unsigned char)lina[2];
     menn[nmenn].snafn2 = 256*(unsigned char)lina[3]+(unsigned char)lina[4];
@@ -206,11 +209,9 @@ void read_por(const char* lina)
     por[npor].naestasambandkonu = 65536*(unsigned char)lina[6]+256*(unsigned char)lina[7]+(unsigned char)lina[8];
     por[npor].elstabarn = 65536*(unsigned char)lina[9]+256*(unsigned char)lina[10]+(unsigned char)lina[11];
     //skráir í hvaða fjölskyldum einstaklingar eru börn
-    int naestabarn = por[npor].elstabarn;
-    while(naestabarn != 0)
+    for(int naestabarn = por[npor].elstabarn; naestabarn != 0; naestabarn = menn[naestabarn].yngrasyst)
     {
         menn[naestabarn].barnifjolsk = npor;
-        naestabarn = menn[naestabarn].yngrasyst;
     }
     por[npor].hjusk = lina[12];
     por[npor].hdag = char2dags(lina, 13);
@@ -225,23 +226,9 @@ void read_textar_init(const int length)
 }
 void read_textar(const char* lina)
 {
-    textar[ntextar].lina = new char[20+1];//TODO
+    textar[ntextar].lina = new char[20+1];//TODO: optimal usage
     strncpy(textar[ntextar].lina, lina, 20);
-//    copy(lina, lina+20, textar[ntextar].lina);
     textar[ntextar].framhald = 65536*(unsigned char)lina[20]+256*(unsigned char)lina[21]+(unsigned char)lina[22];
-}
-
-char* printname(char* nafn)
-{
-    if(nafn[0] == 0)
-        return "";
-    else
-    {
-        char *tmp = new char[strlen(nafn)+2];
-        strcpy(tmp, " ");
-        strcat(tmp, nafn);
-        return tmp;
-    }
 }
 
 int main(int argc, char *argv[])
@@ -258,6 +245,7 @@ int main(int argc, char *argv[])
         path[0] = '\0';
     }
     
+    //read data into memory
     //FNOFN
     cout << "Reading data from fnofn... ";
     if(!file_handler("fnofn", 24, *read_fnofn_init, *read_fnofn, nfnofn))
@@ -284,6 +272,7 @@ int main(int argc, char *argv[])
         return 1;
     cout << npor << " texts fractions." << endl;
 
+    //write data into file
     strcat(path, "espolin.ged");
     ofstream file (path, ios::out|ios::binary|ios::ate);
     if (file.is_open())
@@ -299,16 +288,23 @@ int main(int argc, char *argv[])
         file << "1 GEDC" << endl;
         file << "2 VERS 5.5" << endl;
     //file << "2 FORM LINEAGE-LINKED" << endl;
-        file << "1 CHAR CP1252" << endl;
+        file << "1 CHAR ISO-8859-1" << endl;
+//        file << "1 CHAR CP1252" << endl;
 
         cout << endl << "Writing individual GEDCOM data...";
         //Skrifa út einstaklinga
         for(int i = 1; i<nmenn; i++)
         {
-            int texti = menn[i].texti, textiOffset = 0;
+            int texti = menn[i].texti;
+            int textiOffset = 0;
             
             file << "0 @I" << i << "@ INDI" << endl;
-            file << "1 NAME " << snofn[menn[i].snafn1] << printname(snofn[menn[i].snafn2]) << printname(fnofn[menn[i].fnafn1]) << printname(fnofn[menn[i].fnafn2]) << endl;
+            file << "1 NAME " << snofn[menn[i].snafn1];
+            if(menn[i].snafn2 != 0)
+                file << " " << snofn[menn[i].snafn2];
+            if(menn[i].fnafn1 != 0)
+                file << " " << fnofn[menn[i].fnafn1];
+            file <<  " /" << fnofn[menn[i].fnafn2] << "/" << endl;
             file << "1 SEX " << menn[i].kyn << endl;
             if(menn[i].fdag.y!=0)
             {
@@ -319,7 +315,7 @@ int main(int argc, char *argv[])
                 if(menn[i].fdag.m!=0)
                     file << mnames[menn[i].fdag.m] << " ";
                 file << menn[i].fdag.y << endl;
-                printText("PLAC", file, texti, textiOffset, 128);
+                printText("2 PLAC", file, texti, textiOffset, 128);
             }
             if(menn[i].ddag.y!=0)
             {
@@ -330,36 +326,48 @@ int main(int argc, char *argv[])
                 if(menn[i].ddag.m!=0)
                     file << mnames[menn[i].ddag.m] << " ";
                 file << menn[i].ddag.y << endl;
-                printText("PLAC", file, texti, textiOffset, 130);
+                printText("2 PLAC", file, texti, textiOffset, 130);
             }
             if(menn[i].barnifjolsk != 0)
                 file << "1 FAMC @F" << menn[i].barnifjolsk << "@" << endl;
-            int naestasamband = menn[i].por;
-            while(naestasamband != 0)
-            {
-                file << "1 FAMS @F" << naestasamband << "@" << endl;
-                if(menn[i].kyn == 'M')
+            if(menn[i].kyn == 'M')
+                for(int naestasamband = menn[i].por; naestasamband != 0; naestasamband = por[naestasamband].naestasambandkarls)
                 {
+                    file << "1 FAMS @F" << naestasamband << "@" << endl;
                     por[naestasamband].karl = i;
-                    naestasamband = por[naestasamband].naestasambandkarls;
                 }
-                else
+            else
+                for(int naestasamband = menn[i].por; naestasamband != 0; naestasamband = por[naestasamband].naestasambandkonu)
                 {
+                    file << "1 FAMS @F" << naestasamband << "@" << endl;
                     por[naestasamband].kona = i;
-                    naestasamband = por[naestasamband].naestasambandkonu;
                 }
-            }
 
-            printText("SOUR", file, texti, textiOffset, 132);
+            printText("1 SOUR", file, texti, textiOffset, 132);
 
             if((unsigned char)textar[texti].lina[textiOffset] != 0)
             {
+                int charCount = 20-textiOffset;
                 file << "1 NOTE " << textar[texti].lina+textiOffset;
-                texti = textar[texti].framhald;
-                while(texti != 0)
+                for(texti = textar[texti].framhald; texti != 0; texti = textar[texti].framhald)
                 {
-                    file << textar[texti].lina;
-                    texti = textar[texti].framhald;
+                    if(charCount > 101) // má velja aðra línulengd
+                    {
+                        int i = 0;
+                        while(i < 20 && textar[texti].lina[i] != ' ' && (unsigned char)textar[texti].lina[i] != 0)
+                        {//Smá galli í þessari lykkju: ef heilt orð nær yfir 20 stafi er orðinu skipt upp í tvennt.
+                            file << textar[texti].lina[i++];
+                        }
+                        if((unsigned char)textar[texti].lina[i] != 0 || textar[texti].framhald != 0)
+                            //þessi if-setning er til að sleppa við auka CONT í lokin
+                            file << endl << "2 CONT" << textar[texti].lina+i;
+                        charCount = 20-i;
+                    }
+                    else
+                    {                        
+                        file << textar[texti].lina;
+                        charCount+=20;
+                    }
                 }
                 file << endl;
             }
@@ -379,26 +387,26 @@ int main(int argc, char *argv[])
                 file << "1 HUSB @I" << por[i].karl << "@" << endl;
             if(por[i].kona != 0)
                 file << "1 WIFE @I" << por[i].kona << "@" << endl;
-            if(por[i].hjusk==71 || por[i].hjusk==88) //gift eða skilin
+            if(por[i].hjusk==71 /*gift*/ || por[i].hjusk==88 /*skilin*/)
             {
                 file << "1 MARR" << endl;
                 if(por[i].hdag.y!=0)
                 {
                     file << "2 DATE ";
                     if(por[i].hdag.d!=0)
-                        file << por[i].hdag.d << " " << mnames[por[i].hdag.m] << " ";//TODO: assert por[i].hdag.d!=0
+                        file << por[i].hdag.d << " ";
+                    if(por[i].hdag.m!=0)
+                       file << mnames[por[i].hdag.m] << " ";
                     file << por[i].hdag.y << endl;
                 }
             }
-            if(por[i].hjusk==88) //skilin
+            if(por[i].hjusk==88) //skilin - ath. dags fylgir MARR en ekki DIV
             {
                 file << "1 DIV" << endl;
             }
-            int naestabarn = por[i].elstabarn;
-            while(naestabarn != 0)
+            for(int naestabarn = por[i].elstabarn; naestabarn != 0; naestabarn = menn[naestabarn].yngrasyst)
             {
                 file << "1 CHIL @I" << naestabarn << "@" << endl;
-                naestabarn = menn[naestabarn].yngrasyst;
             }
         }
         file << "0 TRLR" << endl;
