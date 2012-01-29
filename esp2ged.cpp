@@ -1,4 +1,4 @@
-#define version 0.4
+#define version 0.5
 /*
     esp2ged #version
 
@@ -26,6 +26,15 @@
 
 using namespace std;
 
+const char mnames[13][4] =
+{
+    "",
+    "JAN", "FEB", "MAR",
+    "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP",
+    "OCT", "NOV", "DEC"
+};
+
 /*  <DATA>   */
 char *path; //path to espolin
 
@@ -35,14 +44,6 @@ int nfnofn=0;
 char **snofn;
 int nsnofn=0;
 
-const char mnames[13][4] =
-{
-    "",
-    "JAN", "FEB", "MAR",
-    "APR", "MAY", "JUN",
-    "JUL", "AUG", "SEP",
-    "OCT", "NOV", "DEC"
-};
 struct dags_type
 {
     int d,m,y;
@@ -62,6 +63,8 @@ struct menn_type
     int yngrasyst;//#MENN
     int por, barnifjolsk; //#POR
     int texti;//#TEXTAR
+    int abud;
+    int kt;
 } *menn;
 int nmenn=0;
 
@@ -80,6 +83,25 @@ struct textar_type
     int framhald;
 } *textar;
 int ntextar=0;
+
+struct abud_type
+{
+    int naestaabud;
+    int baer;//#BNOFN
+    int uy, ucertainty; //Upphafsár
+    int ly, lcertainty; //lokaár
+    //0 = engin óvissa
+    //8 = um, +-10 ár
+    //12 = (), +-50 ár
+} *abud;
+int nabud=0;
+
+struct bnofn_type
+{
+    char bnafn[20];
+    char snafn[40];
+} *bnofn;
+int nbnofn = 0;
 /*  </DATA>  */
 
 /* help functions */
@@ -125,21 +147,22 @@ void printDate(ostream &file, dags_type dag)
 {
     file << "2 DATE ";
     if(dag.certainty == 2) //um
-        file << "BET " << dag.y-10 << " AND "<< dag.y+10 <<endl;
+        file << "BET " << dag.y-10 << " AND "<< dag.y+10;
     else if(dag.certainty == 3)//()
-        file << "BET " << dag.y-50 << " AND "<< dag.y+50 <<endl;
+        file << "BET " << dag.y-50 << " AND "<< dag.y+50;
     else //mánuður og dagur er aðeins ef það er engin óvissa
     {
         if(dag.d!=0)
             file << dag.d << " ";
         if(dag.m!=0)
             file << mnames[dag.m] << " ";
-            file << dag.y << endl;
+            file << dag.y;
     }
+    file << endl;
 }
 
 /* General file handling function */
-bool file_handler(char* filename, int blocksize, void handle_init(int), void handle_function(const char*), int &datacount)
+bool file_handler(char* filename, int blocksize, void handle_init(int), void handle_function(const char*))
 {
   char* tmpfilename = new char[strlen(path)+strlen(filename)+1];
   strcpy(tmpfilename, path);
@@ -159,8 +182,6 @@ bool file_handler(char* filename, int blocksize, void handle_init(int), void han
         file.read (lina, blocksize);
 
         handle_function(lina);
-
-        ++datacount;
     }
     delete lina;
 //      TODO test this with valgrind
@@ -169,11 +190,7 @@ bool file_handler(char* filename, int blocksize, void handle_init(int), void han
   }
   else
   {
-    cout << "Could not open file " << tmpfilename << "." << endl;
-    cout << endl;
-    cout << "Usage: esp2ged.exe [PATH TO ESPOLIN]" << endl;
-    cout << "Current path is used if no path is given." << endl;
-    cout << "Output is the GEDCOM file espolin.ged." << endl;
+    cout << "Could not open file " << tmpfilename << ".";
     return false;
   }
   delete tmpfilename;
@@ -188,6 +205,7 @@ void read_snofn(const char* lina)
 {
     snofn[nsnofn] = new char[strlen(lina)+1];
     strcpy(snofn[nsnofn], lina);
+    nsnofn++;
 }
 
 void read_fnofn_init(const int length)
@@ -198,6 +216,7 @@ void read_fnofn(const char* lina)
 {
     fnofn[nfnofn] = new char[strlen(lina)+1];
     strcpy(fnofn[nfnofn], lina);
+    nfnofn++;
 }
 
 void read_menn_init(int length)
@@ -207,9 +226,9 @@ void read_menn_init(int length)
 void read_menn(const char* lina)
 {
     if(lina[0] == 'K')
-	menn[nmenn].kyn = 'F'; // Kona
+	   menn[nmenn].kyn = 'F'; // Kona
     else
-	menn[nmenn].kyn = lina[0]; // Karl eða óþekkt 
+    	menn[nmenn].kyn = lina[0]; // Karl eða óþekkt 
 
     menn[nmenn].snafn1 = 256*(unsigned char)lina[1]+(unsigned char)lina[2];
     menn[nmenn].snafn2 = 256*(unsigned char)lina[3]+(unsigned char)lina[4];
@@ -227,6 +246,11 @@ void read_menn(const char* lina)
     menn[nmenn].barnifjolsk = 0;
 
     menn[nmenn].texti = 65536*(unsigned char)lina[27]+256*(unsigned char)lina[28]+(unsigned char)lina[29];
+    
+    menn[nmenn].abud = 65536*(unsigned char)lina[33]+256*(unsigned char)lina[34]+(unsigned char)lina[35];
+
+    menn[nmenn].kt = (unsigned char)lina[36];
+    nmenn++;
 }
 
 void read_por_init(int length)
@@ -240,14 +264,13 @@ void read_por(const char* lina)
     por[npor].elstabarn = 65536*(unsigned char)lina[9]+256*(unsigned char)lina[10]+(unsigned char)lina[11];
     //skráir í hvaða fjölskyldum einstaklingar eru börn
     for(int naestabarn = por[npor].elstabarn; naestabarn != 0; naestabarn = menn[naestabarn].yngrasyst)
-    {
         menn[naestabarn].barnifjolsk = npor;
-    }
     por[npor].hjusk = lina[12];
     por[npor].hdag = char2dags(lina, 13);
     //ath. karl og kona eru skilgreind í menn loop-unni að neðan.
     por[npor].karl = 0;
     por[npor].kona = 0;
+    npor++;
 }
 
 void read_textar_init(const int length)
@@ -256,9 +279,45 @@ void read_textar_init(const int length)
 }
 void read_textar(const char* lina)
 {
-    textar[ntextar].lina = new char[20+1];//TODO: optimal usage
+    textar[ntextar].lina = new char[20+1];//TODO: optimize memory, ef þessi er breytt, þá verður að breyta NOTE
     strncpy(textar[ntextar].lina, lina, 20);
     textar[ntextar].framhald = 65536*(unsigned char)lina[20]+256*(unsigned char)lina[21]+(unsigned char)lina[22];
+    ntextar++;
+}
+
+void read_abud_init(const int length)
+{
+    abud = new abud_type[length];
+}
+void read_abud(const char* lina)
+{
+    abud[nabud].naestaabud = 65536*(unsigned char)lina[3]+256*(unsigned char)lina[4]+(unsigned char)lina[5];
+    abud[nabud].baer = 256*(unsigned char)lina[9]+(unsigned char)lina[10];
+    abud[nabud].uy = 256*((unsigned char)lina[11]%16)+(unsigned char)lina[12];
+    abud[nabud].ucertainty = (unsigned char)lina[11]/16;
+    abud[nabud].ly = 256*((unsigned char)lina[13]%16)+(unsigned char)lina[14];
+    abud[nabud].lcertainty = (unsigned char)lina[13]/16;
+    nabud++;
+}
+
+void read_bnofn_init(const int length)
+{
+    bnofn = new bnofn_type[length];
+}
+void read_bnofn(const char* lina)
+{
+    strncpy(bnofn[nbnofn].bnafn, lina+3, 20);
+    strncpy(bnofn[nbnofn].snafn, lina+23, 40);
+    nbnofn++;
+}
+
+int returnerror()
+{
+    cout << endl << endl;
+    cout << "Usage: esp2ged.exe [PATH TO ESPOLIN]" << endl;
+    cout << "Current path is used if no path is given." << endl;
+    cout << "Output is the GEDCOM file espolin.ged." << endl;
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -274,33 +333,49 @@ int main(int argc, char *argv[])
         path = new char[2];
         path[0] = '\0';
     }
+
+    cout << "Running esp2ged version " << version << "." << endl << endl;
     
     //read data into memory
     //FNOFN
     cout << "Reading data from fnofn... ";
-    if(!file_handler("FNOFN", 24, *read_fnofn_init, *read_fnofn, nfnofn))
-        return 1;
-    cout << nfnofn << " surnames." << endl;
+    if(!file_handler("FNOFN", 24, *read_fnofn_init, *read_fnofn))
+        return returnerror();
+    cout << nfnofn-1 << " surnames." << endl;
     //SNOFN
     cout << "Reading data from snofn... ";
-    if(!file_handler("SNOFN", 28, *read_snofn_init, *read_snofn, nsnofn))
-        return 1;
-    cout << nsnofn << " personal names." << endl;
+    if(!file_handler("SNOFN", 28, *read_snofn_init, *read_snofn))
+        return returnerror();
+    cout << nsnofn-1 << " personal names." << endl;
     //MENN
     cout << "Reading data from menn... ";
-    if(!file_handler("MENN", 37,  *read_menn_init,  *read_menn,  nmenn))
-        return 1;
-    cout << nmenn << " individuals." << endl;
+    if(!file_handler("MENN", 37,  *read_menn_init,  *read_menn))
+        return returnerror();
+    cout << nmenn-1 << " individuals." << endl;
     //POR
     cout << "Reading data from por... "; //depends on menn
-    if(!file_handler("POR", 16,   *read_por_init,   *read_por,   npor))
-        return 1;
-    cout << npor << " families." << endl;
+    if(!file_handler("POR", 16,   *read_por_init,   *read_por))
+        return returnerror();
+    cout << npor-1 << " families." << endl;
     //TEXTAR
     cout << "Reading data from textar... ";
-    if(!file_handler("TEXTAR", 23,   *read_textar_init,   *read_textar,   ntextar))
-        return 1;
-    cout << npor << " text fractions." << endl;
+    if(!file_handler("TEXTAR", 23,   *read_textar_init,   *read_textar))
+        return returnerror();
+    cout << ntextar-1 << " text fractions." << endl;
+    //ABUD
+    cout << "Reading data from abud... ";
+    if(!file_handler("ABUD", 15,   *read_abud_init,   *read_abud))
+        cout << " Skipping." << endl;
+    else //veit að þetta er Espólín 2.6
+    {
+        cout << nabud-1 << " resident records." << endl;
+        //BNOFN
+        cout << "Reading data from bnofn... ";
+        if(!file_handler("BNOFN", 69,   *read_bnofn_init,   *read_bnofn))
+            cout << " Skipping." << endl;
+        else
+            cout << nbnofn-1 << " farm names." << endl;
+    }
 
     //write data into file
     strcat(path, "espolin.ged");
@@ -314,19 +389,24 @@ int main(int argc, char *argv[])
         file << "1 DEST ANY" << endl;
         time_t t = time(0); tm time = *localtime(&t);
         file << "1 DATE " << time.tm_mday << " " << mnames[time.tm_mon + 1] << " " << time.tm_year + 1900 << endl;
-        file << "2 TIME " << time.tm_hour << ":" << time.tm_min << endl;
-    //  file << "1 SUBM" << endl;
+        file << "2 TIME " << time.tm_hour << ":" << time.tm_min << endl; //TODO: add leading zero
+        file << "1 SUBM @SUBM@" << endl;
         file << "1 GEDC" << endl;
         file << "2 VERS 5.5" << endl;
-    //file << "2 FORM LINEAGE-LINKED" << endl;
-        file << "1 CHAR ANSI" << endl;
-//        file << "1 CHAR ISO-8859-1" << endl;
-//        file << "1 CHAR CP1252" << endl;
+        file << "2 FORM LINEAGE-LINKED" << endl;
+        file << "1 CHAR ANSI" << endl; //lifelines skilur ekki ANSI --> CP1252
+        file << "0 @SUBM@ SUBM" << endl;
+        file << "1 NAME Not Provided" << endl; //TODO: Lesa eigandann úr ES.EXE
 
         cout << endl << "Writing individual GEDCOM data...";
         //Skrifa út einstaklinga
         for(int i = 1; i<nmenn; i++)
         {
+            if(menn[i].kyn == '!') //ógildur einstaklingur, ekki viss afhverju svona færslur verða til
+            {
+                cout << endl << "NOTE: Individual I" << i << " is invalid, skipping.";
+                continue;
+            }
             int texti = menn[i].texti;
             int textiOffset = 0;
             
@@ -350,6 +430,70 @@ int main(int argc, char *argv[])
                 printDate(file, menn[i].ddag);
                 printText("2 PLAC", file, texti, textiOffset, 130);
             }
+            if(menn[i].kt != 255) //TODO tékka hvort kt > 99
+            {
+                file << "1 IDNO ";
+                if(menn[i].fdag.d < 10)
+                    file << "0";
+                file << menn[i].fdag.d;
+                if(menn[i].fdag.m < 10)
+                    file << "0";
+                file << menn[i].fdag.m;
+                if(menn[i].fdag.y%100 < 10)
+                    file << "0";
+                file << menn[i].fdag.y%100;
+                if(menn[i].kt < 10)
+                    file << "0";
+                file << menn[i].kt;
+                int vartala =   menn[i].fdag.d/10*3 +
+                                menn[i].fdag.d%10*2 +
+                                menn[i].fdag.m/10*7 +
+                                menn[i].fdag.m%10*6 +
+                                (menn[i].fdag.y/10)%10*5 +
+                                menn[i].fdag.y%10*4 +
+                                (menn[i].kt/10)%10*3 +
+                                menn[i].kt%10*2;
+                vartala = 11-vartala%11;
+                if(vartala == 11)
+                    vartala = 0;
+                file << vartala << (menn[i].fdag.y/100)%10 << endl;
+            }
+            //Búseta
+            for(int naestaabud = menn[i].abud; naestaabud != 0; naestaabud = abud[naestaabud].naestaabud)
+            {//sama ártalið
+                file << "1 RESI" << endl;
+                file << "2 PLAC " << bnofn[abud[naestaabud].baer].bnafn << ", " << bnofn[abud[naestaabud].baer].snafn << endl;
+                file << "2 DATE ";
+                if(abud[naestaabud].uy == abud[naestaabud].ly && abud[naestaabud].ucertainty == abud[naestaabud].lcertainty)
+                {//bara eitt ártal gefið
+                    if(abud[naestaabud].ucertainty == 8) //um
+                        file << "BET " << abud[naestaabud].uy-10 << " AND "<< abud[naestaabud].uy+10;
+                    else if(abud[naestaabud].ucertainty == 12)//()
+                        file << "BET " << abud[naestaabud].uy-50 << " AND "<< abud[naestaabud].uy+50;
+                    else //engin óvissa
+                        file << abud[naestaabud].uy;
+                }
+                else
+                {//ólík ártöl
+                    if(abud[naestaabud].uy != 0)
+                    {
+                        file << "FROM ";
+                        if(abud[naestaabud].ucertainty)
+                            file << "EST ";
+                        file << abud[naestaabud].uy;
+                    }
+                    if(abud[naestaabud].ly != 0)
+                    {
+                        if(abud[naestaabud].uy != 0)
+                            file << " ";
+                        file << "TO ";
+                        if(abud[naestaabud].lcertainty)
+                            file << "EST ";
+                        file << abud[naestaabud].ly;
+                    }
+                }
+                file << endl;
+            }
             if(menn[i].barnifjolsk != 0)
                 file << "1 FAMC @F" << menn[i].barnifjolsk << "@" << endl;
             if(menn[i].kyn == 'M')
@@ -369,26 +513,36 @@ int main(int argc, char *argv[])
 
             if((unsigned char)textar[texti].lina[textiOffset] != 0)
             {
-                int charCount = 20-textiOffset;
                 file << "1 NOTE " << textar[texti].lina+textiOffset;
+                int lineCount = 0;
                 for(texti = textar[texti].framhald; texti != 0; texti = textar[texti].framhald)
                 {
-                    if(charCount > 101) // má velja aðra línulengd
+                    if(lineCount == 3) // má velja aðra línulengd
                     {
-                        int i = 0;
-                        while(i < 20 && textar[texti].lina[i] != ' ' && (unsigned char)textar[texti].lina[i] != 0)
-                        {//Smá galli í þessari lykkju: ef heilt orð nær yfir 20 stafi er orðinu skipt upp í tvennt.
-                            file << textar[texti].lina[i++];
+                        if(textar[texti].framhald == 0 || textar[textar[texti].framhald].lina[0] == 0) //ekkert framhald
+                            file << textar[texti].lina;
+                        else
+                        {
+                            int i = 1;
+                            while(textar[texti].lina[i] != 0 && i<20)
+                                i++;
+                            
+                            if(textar[texti].lina[i-1] == ' ')
+                            {
+                                textar[texti].lina[i-1] = 0;
+                                file << textar[texti].lina << endl << "2 CONT ";
+                            }
+                            else if(textar[textar[texti].framhald].lina[0] == ' ')
+                                file << textar[texti].lina << endl << "2 CONT";
+                            else
+                                file << textar[texti].lina << endl << "2 CONC ";
                         }
-                        if((unsigned char)textar[texti].lina[i] != 0 || textar[texti].framhald != 0)
-                            //þessi if-setning er til að sleppa við auka CONT í lokin
-                            file << endl << "2 CONT" << textar[texti].lina+i;
-                        charCount = 20-i;
+                        lineCount = 0;
                     }
                     else
-                    {                        
+                    {
+                        lineCount++;
                         file << textar[texti].lina;
-                        charCount+=20;
                     }
                 }
                 file << endl;
@@ -396,12 +550,11 @@ int main(int argc, char *argv[])
         }
 
         cout << endl << "Writing family GEDCOM data...";
-        //Skrifa út fjölskyldur
         for(int i = 1; i<npor; i++)
         {
             if(por[i].kona == 0 && por[i].karl == 0 && por[i].elstabarn == 0) //getur gerst
             {
-                cout << endl << "Warning: Family F" << i << " has no members, skipping.";
+                cout << endl << "NOTE: Family F" << i << " has no members, skipping.";
                 continue;
             }
             file << "0 @F" << i << "@ FAM" << endl;
@@ -409,22 +562,59 @@ int main(int argc, char *argv[])
                 file << "1 HUSB @I" << por[i].karl << "@" << endl;
             if(por[i].kona != 0)
                 file << "1 WIFE @I" << por[i].kona << "@" << endl;
-            if(por[i].hjusk==71 /*gift*/ || por[i].hjusk==88 /*skilin*/)
+//            cout << "family F" << i << ": " << (unsigned int)por[i].hjusk << endl;
+            if(por[i].hjusk==0x58 /*skilin*/)
             {
-                file << "1 MARR" << endl;
+                if(por[i].hdag.y!=0)
+                { //ártal fylgir giftingu ef hjúskaparstaða er skráð gift/skilin
+                    file << "1 MARR" << endl;
+                    printDate(file, por[i].hdag);
+                }
+                file << "1 DIV" << endl;
+            }
+            else
+            {
+                if(por[i].hjusk==0x55)
+                    file << "1 ENGA" << endl;
+                else if(por[i].hjusk==0x47 /*gift*/)
+                    file << "1 MARR" << endl;
+                else if(por[i].hjusk==0x42)
+                {
+                    file << "1 EVEN" << endl;
+                    file << "2 TYPE Barnsmóðir/-faðir" << endl;
+                }
+                else if(por[i].hjusk==0x53)
+                {
+                    file << "1 EVEN" << endl;
+                    file << "2 TYPE Sambúð" << endl;
+                }
+                else if(por[i].hjusk==0x46)
+                {
+                    file << "1 EVEN" << endl;
+                    file << "2 TYPE Sambúð slitið" << endl;
+                }
+                else if(por[i].hjusk==0x43)
+                {
+                    file << "1 EVEN" << endl;
+                    file << "2 TYPE Maki(Fylgikona)" << endl;
+                }
+                else if(por[i].hjusk==0x44)
+                {
+                    file << "1 EVEN" << endl;
+                    file << "2 TYPE Maki(Bústýra)" << endl;
+                }
                 if(por[i].hdag.y!=0)
                 {
+                    if(por[i].hjusk==0x20)
+                    {
+                        file << "1 EVEN" << endl;
+                        file << "2 TYPE Óþekkt hjúskaparstaða" << endl;
+                    }
                     printDate(file, por[i].hdag);
                 }
             }
-            if(por[i].hjusk==88) //skilin - ath. dags fylgir MARR en ekki DIV
-            {
-                file << "1 DIV" << endl;
-            }
             for(int naestabarn = por[i].elstabarn; naestabarn != 0; naestabarn = menn[naestabarn].yngrasyst)
-            {
                 file << "1 CHIL @I" << naestabarn << "@" << endl;
-            }
         }
         file << "0 TRLR" << endl;
         file.close();
