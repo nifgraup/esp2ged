@@ -1,4 +1,4 @@
-#define version 0.3
+#define version 0.4
 /*
     esp2ged #version
 
@@ -22,6 +22,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <ctime>
+#include <string.h>
 
 using namespace std;
 
@@ -45,15 +46,13 @@ const char mnames[13][4] =
 struct dags_type
 {
     int d,m,y;
+    int certainty;
+    //0 = engin óvissa, ártal líka með dagsetningu (amk. mánuði)
+    //1 = engin óvissa, bara ártal
+    //2 = um, +-10 ár
+    //3 = (), +-50 ár
 };
-dags_type char2dags(const char* lina, int i)
-{
-    dags_type ret;
-    ret.d = (unsigned char)lina[i]/8 + ((unsigned char)lina[i]%8)/8;
-    ret.m = 2*((unsigned char)lina[i]%8) + (unsigned char)lina[i+1]/128;
-    ret.y = (256*((unsigned char)lina[i+1]%128) + (unsigned char)lina[i+2])/8;
-    return ret;
-}
+
 struct menn_type
 {
     char kyn;
@@ -81,6 +80,19 @@ struct textar_type
     int framhald;
 } *textar;
 int ntextar=0;
+/*  </DATA>  */
+
+/* help functions */
+dags_type char2dags(const char* lina, int i)
+{
+    dags_type ret;
+    ret.d = (unsigned char)lina[i]/8 + ((unsigned char)lina[i]%8)/8;
+    ret.m = 2*((unsigned char)lina[i]%8) + (unsigned char)lina[i+1]/128;
+    ret.y = (256*((unsigned char)lina[i+1]%128) + (unsigned char)lina[i+2])/8;
+    ret.certainty = (unsigned char)lina[i+2]%8;
+    return ret;
+}
+
 void printText(char* tag, ostream &file, int &texti, int &textiOffset, unsigned char merki)
 {
     if((unsigned char)textar[texti].lina[textiOffset] == merki)
@@ -108,8 +120,23 @@ void printText(char* tag, ostream &file, int &texti, int &textiOffset, unsigned 
         }
     }
 }
-/*  </DATA>  */
 
+void printDate(ostream &file, dags_type dag)
+{
+    file << "2 DATE ";
+    if(dag.certainty == 2) //um
+        file << "BET " << dag.y-10 << " AND "<< dag.y+10 <<endl;
+    else if(dag.certainty == 3)//()
+        file << "BET " << dag.y-50 << " AND "<< dag.y+50 <<endl;
+    else //mánuður og dagur er aðeins ef það er engin óvissa
+    {
+        if(dag.d!=0)
+            file << dag.d << " ";
+        if(dag.m!=0)
+            file << mnames[dag.m] << " ";
+            file << dag.y << endl;
+    }
+}
 
 /* General file handling function */
 bool file_handler(char* filename, int blocksize, void handle_init(int), void handle_function(const char*), int &datacount)
@@ -121,7 +148,7 @@ bool file_handler(char* filename, int blocksize, void handle_init(int), void han
   ifstream file (tmpfilename, ios::in|ios::binary|ios::ate);
   if (file.is_open())
   {
-    int filesize = file.tellg();
+    int filesize = (int)file.tellg();
 
     handle_init(filesize/blocksize);
 
@@ -179,7 +206,10 @@ void read_menn_init(int length)
 }
 void read_menn(const char* lina)
 {
-    menn[nmenn].kyn = lina[0]; // 'M' eða 'F'
+    if(lina[0] == 'K')
+	menn[nmenn].kyn = 'F'; // Kona
+    else
+	menn[nmenn].kyn = lina[0]; // Karl eða óþekkt 
 
     menn[nmenn].snafn1 = 256*(unsigned char)lina[1]+(unsigned char)lina[2];
     menn[nmenn].snafn2 = 256*(unsigned char)lina[3]+(unsigned char)lina[4];
@@ -248,33 +278,34 @@ int main(int argc, char *argv[])
     //read data into memory
     //FNOFN
     cout << "Reading data from fnofn... ";
-    if(!file_handler("fnofn", 24, *read_fnofn_init, *read_fnofn, nfnofn))
+    if(!file_handler("FNOFN", 24, *read_fnofn_init, *read_fnofn, nfnofn))
         return 1;
     cout << nfnofn << " surnames." << endl;
     //SNOFN
     cout << "Reading data from snofn... ";
-    if(!file_handler("snofn", 28, *read_snofn_init, *read_snofn, nsnofn))
+    if(!file_handler("SNOFN", 28, *read_snofn_init, *read_snofn, nsnofn))
         return 1;
     cout << nsnofn << " personal names." << endl;
     //MENN
     cout << "Reading data from menn... ";
-    if(!file_handler("menn", 37,  *read_menn_init,  *read_menn,  nmenn))
+    if(!file_handler("MENN", 37,  *read_menn_init,  *read_menn,  nmenn))
         return 1;
     cout << nmenn << " individuals." << endl;
     //POR
     cout << "Reading data from por... "; //depends on menn
-    if(!file_handler("por", 16,   *read_por_init,   *read_por,   npor))
+    if(!file_handler("POR", 16,   *read_por_init,   *read_por,   npor))
         return 1;
     cout << npor << " families." << endl;
     //TEXTAR
     cout << "Reading data from textar... ";
-    if(!file_handler("textar", 23,   *read_textar_init,   *read_textar,   ntextar))
+    if(!file_handler("TEXTAR", 23,   *read_textar_init,   *read_textar,   ntextar))
         return 1;
-    cout << npor << " texts fractions." << endl;
+    cout << npor << " text fractions." << endl;
 
     //write data into file
     strcat(path, "espolin.ged");
-    ofstream file (path, ios::out|ios::binary|ios::ate);
+    ofstream file;
+	file.open(path);
     if (file.is_open())
     {
         file << "0 HEAD" << endl;
@@ -288,7 +319,8 @@ int main(int argc, char *argv[])
         file << "1 GEDC" << endl;
         file << "2 VERS 5.5" << endl;
     //file << "2 FORM LINEAGE-LINKED" << endl;
-        file << "1 CHAR ISO-8859-1" << endl;
+        file << "1 CHAR ANSI" << endl;
+//        file << "1 CHAR ISO-8859-1" << endl;
 //        file << "1 CHAR CP1252" << endl;
 
         cout << endl << "Writing individual GEDCOM data...";
@@ -309,23 +341,13 @@ int main(int argc, char *argv[])
             if(menn[i].fdag.y!=0)
             {
                 file << "1 BIRT" << endl;
-                file << "2 DATE ";
-                if(menn[i].fdag.d!=0)
-                    file << menn[i].fdag.d << " ";
-                if(menn[i].fdag.m!=0)
-                    file << mnames[menn[i].fdag.m] << " ";
-                file << menn[i].fdag.y << endl;
+                printDate(file, menn[i].fdag);
                 printText("2 PLAC", file, texti, textiOffset, 128);
             }
             if(menn[i].ddag.y!=0)
             {
                 file << "1 DEAT" << endl;
-                file << "2 DATE ";
-                if(menn[i].ddag.d!=0)
-                    file << menn[i].ddag.d << " ";
-                if(menn[i].ddag.m!=0)
-                    file << mnames[menn[i].ddag.m] << " ";
-                file << menn[i].ddag.y << endl;
+                printDate(file, menn[i].ddag);
                 printText("2 PLAC", file, texti, textiOffset, 130);
             }
             if(menn[i].barnifjolsk != 0)
@@ -392,12 +414,7 @@ int main(int argc, char *argv[])
                 file << "1 MARR" << endl;
                 if(por[i].hdag.y!=0)
                 {
-                    file << "2 DATE ";
-                    if(por[i].hdag.d!=0)
-                        file << por[i].hdag.d << " ";
-                    if(por[i].hdag.m!=0)
-                       file << mnames[por[i].hdag.m] << " ";
-                    file << por[i].hdag.y << endl;
+                    printDate(file, por[i].hdag);
                 }
             }
             if(por[i].hjusk==88) //skilin - ath. dags fylgir MARR en ekki DIV
