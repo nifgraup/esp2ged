@@ -1,64 +1,64 @@
-esp2ged
+ï»¿esp2ged
 =======
 
-Hvağ er esp2ged?
+HvaÃ° er esp2ged?
 ----------------
 
-Esp2ged er forrit til ağ færa gögn úr [Espólín](http://www.frisk.is/espolin.html)
-yfir í [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM) skráarsniğ sem stutt er af
-(nær) öllum ættfræğiforritum. Esp2ged er gefiğ út undir [GNU GPL](http://www.gnu.org/licenses/gpl.txt)
-leyfinu, útgáfu 3 eğa hærri. Öllum er frjálst ağ nota esp2ged eins og şeim sınist. Ef forritinu
-er dreift og/eğa şví breytt, verğur ağ fylgja skilmálum GPL leyfisins.
+Esp2ged er forrit til aÃ° fÃ¦ra gÃ¶gn Ãºr [EspÃ³lÃ­n](http://www.frisk.is/espolin.html)
+yfir Ã­ [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM) skrÃ¡arsniÃ° sem stutt er af
+(nÃ¦r) Ã¶llum Ã¦ttfrÃ¦Ã°iforritum. Esp2ged er gefiÃ° Ãºt undir [GNU GPL](http://www.gnu.org/licenses/gpl.txt)
+leyfinu, ÃºtgÃ¡fu 3 eÃ°a hÃ¦rri. Ã–llum er frjÃ¡lst aÃ° nota esp2ged eins og Ã¾eim sÃ½nist. Ef forritinu
+er dreift og/eÃ°a Ã¾vÃ­ breytt, verÃ°ur aÃ° fylgja skilmÃ¡lum GPL leyfisins.
 
 
-Niğurhal
+NiÃ°urhal
 --------
 
-* Útgáfa 0.5: 3. 2. 2009: [esp2ged.exe](https://notendur.hi.is/bjr2/esp2ged/esp2ged.exe) Windows keyrsluskrá.
+* ÃštgÃ¡fa 0.5: 3. 2. 2009: [esp2ged.exe](https://notendur.hi.is/bjr2/esp2ged/esp2ged.exe) Windows keyrsluskrÃ¡.
 
 Notkun
 ------
 
-esp2ged.exe [SLÓĞ AĞ ESPÓLÍN]
+esp2ged.exe [SLÃ“Ã AÃ ESPÃ“LÃN]
 
-Ef engin slóğ er gefin er gert ráğ fyrir ağ Espólín er í núverandi möppu. Út skrifast GEDCOM skráin espolin.ged.
-Í Windows er hægt ağ draga Espólín möppuna ofan á esp2ged.exe í stağ şess ağ kalla á esp2ged.exe úr skipanalínu.
+Ef engin slÃ³Ã° er gefin er gert rÃ¡Ã° fyrir aÃ° EspÃ³lÃ­n er Ã­ nÃºverandi mÃ¶ppu. Ãšt skrifast GEDCOM skrÃ¡in espolin.ged.
+Ã Windows er hÃ¦gt aÃ° draga EspÃ³lÃ­n mÃ¶ppuna ofan Ã¡ esp2ged.exe Ã­ staÃ° Ã¾ess aÃ° kalla Ã¡ esp2ged.exe Ãºr skipanalÃ­nu.
 
 
 TODO
 ----
 
-* Prófa meğ sem flestum Espólín gagnagrunnum. Getur şú hjálpağ til?
-* Prófa ağ flytja GEDCOM skrána sem esp2ged bır til inn í sem flest ættfræğiforrit. Getur şú hjálpağ til?
-* Nota "0 SOUR @S1@" fyrir heimildir og samnıta heimildir sem eru eins.
+* PrÃ³fa meÃ° sem flestum EspÃ³lÃ­n gagnagrunnum. Getur Ã¾Ãº hjÃ¡lpaÃ° til?
+* PrÃ³fa aÃ° flytja GEDCOM skrÃ¡na sem esp2ged bÃ½r til inn Ã­ sem flest Ã¦ttfrÃ¦Ã°iforrit. Getur Ã¾Ãº hjÃ¡lpaÃ° til?
+* Nota "0 SOUR @S1@" fyrir heimildir og samnÃ½ta heimildir sem eru eins.
 
 
-Vafaatriği
+VafaatriÃ°i
 ----------
 
-* Fylgir dagsetningin giftingu eğa skilnaği í hjúskaparstöğunni "Gift/Skilin"?
-* Hvağ táknar dagsetningin í öğrum hjúskaparstöğum?
-* Á ağ nota tímabil fyrir um og () óvissu eins og nú er gert eğa ABT og EST?
+* Fylgir dagsetningin giftingu eÃ°a skilnaÃ°i Ã­ hjÃºskaparstÃ¶Ã°unni "Gift/Skilin"?
+* HvaÃ° tÃ¡knar dagsetningin Ã­ Ã¶Ã°rum hjÃºskaparstÃ¶Ã°um?
+* Ã aÃ° nota tÃ­mabil fyrir um og () Ã³vissu eins og nÃº er gert eÃ°a ABT og EST?
 
 
 Tenglar
 -------
 
 
-### Forrit sem geta lesiğ úttakiğ úr esp2ged.
+### Forrit sem geta lesiÃ° ÃºttakiÃ° Ãºr esp2ged.
 
-* [The Windows GEDCOM Validator](http://www.rumblefische.com/util/validator/tgv.html) athugar hvort GEDCOM skrár fylgja stağlinum. Esp2ged ætti ağ búa til réttar GEDCOM skrár.
-* [LifeLines](http://lifelines.sourceforge.net/) er [frjálst](http://is.wikipedia.org/wiki/Frjáls_hugbúnağur) ættfræğiforrit sem getur búiğ til sérsniğnar skırslur sem skilgreindar eru meğ skriftum.
-* Ættfræğiforritiğ [GRAMPS](http://www.gramps-project.org).
-* Ættfræğiforritiğ [PERSONAL ANCESTRAL FILE](http://www.familysearch.org/eng/paf/).
-
-
-### Önnur forrit
-
-* [Ósk](http://www.studlar.net/is/) er ættfræğiforrit á íslensku fyrir Windows og Mac OS X.
-* [Heimasíğa](http://www.frisk.is/espolin.html) ættfræğiforritsins Espólin.
+* [The Windows GEDCOM Validator](http://www.rumblefische.com/util/validator/tgv.html) athugar hvort GEDCOM skrÃ¡r fylgja staÃ°linum. Esp2ged Ã¦tti aÃ° bÃºa til rÃ©ttar GEDCOM skrÃ¡r.
+* [LifeLines](http://lifelines.sourceforge.net/) er [frjÃ¡lst](http://is.wikipedia.org/wiki/FrjÃ¡ls_hugbÃºnaÃ°ur) Ã¦ttfrÃ¦Ã°iforrit sem getur bÃºiÃ° til sÃ©rsniÃ°nar skÃ½rslur sem skilgreindar eru meÃ° skriftum.
+* Ã†ttfrÃ¦Ã°iforritiÃ° [GRAMPS](http://www.gramps-project.org).
+* Ã†ttfrÃ¦Ã°iforritiÃ° [PERSONAL ANCESTRAL FILE](http://www.familysearch.org/eng/paf/).
 
 
-Höfundur
+### Ã–nnur forrit
+
+* [Ã“sk](http://www.studlar.net/is/) er Ã¦ttfrÃ¦Ã°iforrit Ã¡ Ã­slensku fyrir Windows og Mac OS X.
+* [HeimasÃ­Ã°a](http://www.frisk.is/espolin.html) Ã¦ttfrÃ¦Ã°iforritsins EspÃ³lin.
+
+
+HÃ¶fundur
 --------
-Björgvin Ragnarsson, nifgraup hjá gmail punktur com.
+BjÃ¶rgvin Ragnarsson, nifgraup hjÃ¡ gmail punktur com.
