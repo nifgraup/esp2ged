@@ -1,8 +1,5 @@
-﻿esp2ged
-=======
-
-Hvað er esp2ged?
-----------------
+﻿Hvað er esp2ged?
+================
 
 Esp2ged er forrit til að færa gögn úr [Espólín](http://www.frisk.is/espolin.html)
 yfir í [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM) skráarsnið sem stutt er af
@@ -19,7 +16,7 @@ Niðurhal
 Notkun
 ------
 
-esp2ged.exe [SLÓÐ AÐ ESPÓLÍN]
+    esp2ged.exe [SLÓÐ AÐ ESPÓLÍN]
 
 Ef engin slóð er gefin er gert ráð fyrir að Espólín er í núverandi möppu. Út skrifast GEDCOM skráin espolin.ged.
 Í Windows er hægt að draga Espólín möppuna ofan á esp2ged.exe í stað þess að kalla á esp2ged.exe úr skipanalínu.
@@ -44,8 +41,7 @@ Vafaatriði
 Tenglar
 -------
 
-
-### Forrit sem geta lesið úttakið úr esp2ged.
+### Forrit sem geta lesið úttakið úr esp2ged
 
 * [The Windows GEDCOM Validator](http://www.rumblefische.com/util/validator/tgv.html) athugar hvort GEDCOM skrár fylgja staðlinum. Esp2ged ætti að búa til réttar GEDCOM skrár.
 * [LifeLines](http://lifelines.sourceforge.net/) er [frjálst](http://is.wikipedia.org/wiki/Frjáls_hugbúnaður) ættfræðiforrit sem getur búið til sérsniðnar skýrslur sem skilgreindar eru með skriftum.
