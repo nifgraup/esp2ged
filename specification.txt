@@ -1,0 +1,83 @@
+﻿
+Allar skrárnar eru uppbyggðar sem færslur x bæta og fyrsta raunverulega færslan er önnur í röðinni.
+
+SNOFN		- Skrá yfir leyfileg sérnöfn
+	Skiptist í runu 28 bæta. Byrjar í annari röð á nafni númer 1 og síðasta röð er síðasta nafn.
+	[0-19]		Nafn. Þegar Sérnafn er búið kemur 00 og svo restin af nafninu.
+	--rest skiptir ekki máli (held ég)
+	[20]		Oftast 0, stundum 1, 2, 3 eða 4. (Fylgir líklega [21])
+	[22]		Oftast 0, stundum 1, 2, 3 eða 4. (Fylgir líklega [23])
+	[24-26]		ATH. EKKI NOTAÐ. Teljari byrjar í 000001 á fyrstu færslu og einkvæmt númerar hverja færslu.
+				Ef vantar inn í teljarann getur gildunum verið bætt inn í annars staðar.
+				Ef 000000 þá gilt sérnafn en ekki skráður einstaklingur.
+	[27]		'M' ef karlmannsnafn, 'K' ef kvenmannsnafn.
+				*Stundum kemur '?' á milli og þá eru gild nöfn en ekki skráður einstaklingur.
+
+FNOFN		- Skrá yfir leyfileg föðurnöfn
+	Skiptist í runu 24 bæta. Byrjar í annari röð á nafni númer 1 og síðasta röð er síðasta nafn.
+	[0-19]		Nafn. þegar föðurnafniðer búið kemur 00.
+	--rest skiptir ekki máli (held ég)
+
+MENN		- Skrá yfir einstaklinga - klárað
+	Skiptist í runu 37 bæta. Byrjar í annari röð.
+	[0]			'M' ef karlmaður, 'K' ef kona.
+	[1-2]		#SNAFN. Númer Fyrsta nafns - eiginnafn. mod 32768. Ef div 32768 er 1 þá er þetta nick name. (! á undan nafninu í espólín)
+	[3-4]		#SNAFN. Númer annars nafns. mod 32768. Ef div 32768 er 1 þá er þetta nick name. (! á undan nafninu í espólín)
+	[5-6]		#FNAFN. Númer þriðja nafns. (ættarnafn/föðurnafn)
+	[7-8]		#FNAFN. Númer fjórða nafns - föðurnafn.
+	[9-11]		Fæðingardags (sjá kóða). Modulus 8 gefur uppl. um og () flagg-bita, 2 er um og 3 er ().
+	[12-14]		Dánardagur, sama snið og [9-11].
+	[15-17]		#MENN. Númer föður
+	[18-20]		#MENN. Númer Móður
+	[21-23]		#MENN. Númer næsta yngra systkyni.
+	[24-26]		#MENN. Númer næsta eldra systkyni.
+	[27-29]		#TEXT. Númer textafærslu
+	[30-32]		#POR.  Númer parafærslu einstaklings.
+	[33-35]		#ABUD. Númer fyrstu ábúðarfærslu. 0 ef engin.
+	[36]		Stafur 7 & 8 í kennitölu, 0xff ef engin kennitala skráð.
+
+POR
+	Skiptist í runur 16 bæta. Byrjar í annari röð.
+	[3-5]		#POR. Númer sambands næst fyrir neðan í makaröð karls.
+	[6-8]		#POR. Númer sambands næst fyrir neðan í makaröð konu.
+	[9-11]		#MENN. Elsta barn sem skilgreinir sambandið.
+	[12]		47=Gift, 58=Gift/Skilin, 42=Barnsmóðir, 53=Sambýliskona, 46=Sambúð slitið, 55=Unnusta, 43=Fylgikona, 44=Bústýra, 20=óþekkt.
+	[13-15]		Dagsetning hjúskapar.
+
+TEXTAR
+	Skiptist í runu 23 bæta. Byrjar í annari röð.
+	Hver textafærsla er byggð svona upp:
+		Heildartexti = ""
+		do
+		{
+			Heildartext.append([0-19])
+			#TEXTAR = [20-23] //framhald
+		}
+		while(#TEXTAR != 0)
+	Heildartexti er svo túklaður á eftirfarandi hátt með BNF:
+	HEILDARTEXTI   ::= [FÆÐINGARSTAÐUR] [DÁNARSTAÐUR] [HEIMILD] [FLÖGG] TEXTI .*
+	FÆÐINGARSTAÐUR ::= \x80 CHAR+ \x81
+	DÁNARSTAÐUR    ::= \x82 CHAR+ \x83
+	HEIMILD        ::= \x84 CHAR+ \x85
+	FLÖGG		   ::= \x86 FLAGG+ \x87
+	TEXTI		   ::= CHAR* \x00
+	FLAGG          ::= #FLOGG.ESP, 1 bæti
+	CHAR		   ::= bókstafir sem hægt er að skrifa í espólín.
+
+ABUD
+	Skiptist í runu 15 bæta. Byrjar í Annari röð.
+	[0-2]		#MENN.	Númer einstaklings. (Óþarfi?)
+	[3-5]		#ABUD.	Númer næstu ábúðarfærslu. 0 ef þessi er síðasta.
+	[6-8]		#ABUD.  (Þarnæsta ábúðarfærsla. Óþarfi. Gæti verið að færsla kvenna vísar á fyrst karla?)
+	[9-10]		#BNOFN. Númer bæjarfærslu.
+	[11-12]		Fyrra ártal mod 4096, [11] div 16 gefur uppl. um og () flagg-bita, 8 er um og 12 er (). 0 enginn.
+	[13-14]		Seinna ártal sama form og [11-12]
+
+BNOFN
+	Skiptist í runu 69 bæta
+	[3-22]		Bæjarnafn.
+	[23-62]		Heiti sveitar.
+
+FLAGG.ESP
+	Skiptist í runu 61 bætis. Byrjar í fyrstu röð og hún númeruð 1 ólíkt hinum skránum.
+	[0-59]		Strengur sem lýsir flagginu.
