@@ -2,7 +2,7 @@
 /*
     esp2ged #version
 
-    Copyright (C) 2008 Björgvin Ragnarsson
+    Copyright (C) 2008, 2009, 2012, 2014 Björgvin Ragnarsson
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the Free
@@ -412,8 +412,13 @@ int main(int argc, char *argv[])
             
             file << "0 @I" << i << "@ INDI" << endl;
             file << "1 NAME " << snofn[menn[i].snafn1];
-            if(menn[i].snafn2 != 0)
-                file << " " << snofn[menn[i].snafn2];
+            if(menn[i].snafn2 != 0) {
+                if (menn[i].snafn2 < nsnofn) {
+                    file << " " << snofn[menn[i].snafn2];
+                } else {
+                    cout << endl << "NOTE: Individual I" << i << " has an invalid second name, skipping his/her second name.";
+                }
+            }
             if(menn[i].fnafn1 != 0)
                 file << " " << fnofn[menn[i].fnafn1];
             file <<  " /" << fnofn[menn[i].fnafn2] << "/" << endl;
