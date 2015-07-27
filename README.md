@@ -3,15 +3,13 @@ Hvað er esp2ged?
 
 Esp2ged er forrit til að færa gögn úr [Espólín](http://www.frisk.is/espolin.html)
 yfir í [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM) skráarsnið sem stutt er af
-(nær) öllum ættfræðiforritum. Esp2ged er gefið út undir [GNU GPL](http://www.gnu.org/licenses/gpl.txt)
-leyfinu, útgáfu 3 eða hærri. Öllum er frjálst að nota esp2ged eins og þeim sýnist. Ef forritinu
-er dreift og/eða því breytt, verður að fylgja skilmálum GPL leyfisins.
+(nær) öllum ættfræðiforritum.
 
 
 Niðurhal
 --------
 
-* Útgáfa 0.5: 3. 2. 2009: [esp2ged.exe](https://notendur.hi.is/bjr2/esp2ged/esp2ged.exe) Windows keyrsluskrá.
+* [Hér má finna nýjustu útgáfu esp2ged](https://github.com/nifgraup/esp2ged/releases).
 
 Notkun
 ------
@@ -49,12 +47,8 @@ Tenglar
 * Ættfræðiforritið [PERSONAL ANCESTRAL FILE](http://www.familysearch.org/eng/paf/).
 
 
-### Önnur forrit
-
-* [Ósk](http://www.studlar.net/is/) er ættfræðiforrit á íslensku fyrir Windows og Mac OS X.
-* [Heimasíða](http://www.frisk.is/espolin.html) ættfræðiforritsins Espólin.
-
-
 Höfundur
 --------
-Björgvin Ragnarsson, nifgraup hjá gmail punktur com.
+Björgvin Ragnarsson, nifgraup hjá gmail punktur com. Esp2ged er gefið út undir [GNU GPL](http://www.gnu.org/licenses/gpl.txt)
+leyfinu, útgáfu 3 eða hærri. Öllum er frjálst að nota esp2ged eins og þeim sýnist. Ef forritinu
+er dreift og/eða því breytt, verður að fylgja skilmálum GPL leyfisins.

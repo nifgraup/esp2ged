@@ -1,8 +1,8 @@
-#define version 0.5
+#define version 0.6
 /*
     esp2ged #version
 
-    Copyright (C) 2008, 2009, 2012, 2014 Björgvin Ragnarsson
+    Copyright (C) 2008, 2009, 2012, 2014, 2015 Björgvin Ragnarsson
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the Free
