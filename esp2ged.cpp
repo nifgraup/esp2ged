@@ -411,7 +411,14 @@ int main(int argc, char *argv[])
             int textiOffset = 0;
             
             file << "0 @I" << i << "@ INDI" << endl;
-            file << "1 NAME " << snofn[menn[i].snafn1];
+            file << "1 NAME";
+            if(menn[i].snafn1 != 0) {
+                if (menn[i].snafn1 < nsnofn) {
+                    file << " " << snofn[menn[i].snafn1];
+                } else {
+                  cout << endl << "NOTE: Individual I" << i << " has an invalid first name, skipping his/her first name.";
+                }
+            }
             if(menn[i].snafn2 != 0) {
                 if (menn[i].snafn2 < nsnofn) {
                     file << " " << snofn[menn[i].snafn2];
@@ -419,9 +426,23 @@ int main(int argc, char *argv[])
                     cout << endl << "NOTE: Individual I" << i << " has an invalid second name, skipping his/her second name.";
                 }
             }
-            if(menn[i].fnafn1 != 0)
-                file << " " << fnofn[menn[i].fnafn1];
-            file <<  " /" << fnofn[menn[i].fnafn2] << "/" << endl;
+            if(menn[i].fnafn1 != 0) {
+                if (menn[i].fnafn1 < nfnofn) {
+                    file << " " << fnofn[menn[i].fnafn1];
+                } else {
+                    cout << endl << "NOTE: Individual I" << i << " has an invalid third name, skipping his/her third name.";
+                }
+            }
+            if(menn[i].fnafn2 != 0) {
+                if (menn[i].fnafn2 < nfnofn) {
+                    file <<  "/" << fnofn[menn[i].fnafn2] << "/" << endl;
+                } else {
+                    file <<  "//" << endl;
+                    cout << endl << "NOTE: Individual I" << i << " has an invalid surname, skipping his/her surname.";
+                }
+            } else {
+                file <<  "//" << endl;
+            }
             file << "1 SEX " << menn[i].kyn << endl;
             if(menn[i].fdag.y!=0)
             {
