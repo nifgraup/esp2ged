@@ -570,6 +570,10 @@ int main(int argc, char *argv[])
                         lineCount++;
                         file << textar[texti].lina;
                     }
+                    if(texti == textar[texti].framhald) {
+                      cout << endl << "NOTE: Individual I" << i << " has circular reference in text entry.";
+                      break;
+                    }
                 }
                 file << endl;
             }
