@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <ctime>
 #include <string.h>
+#include <cxxtools/iconvstream.h>
 
 using namespace std;
 
@@ -379,10 +380,11 @@ int main(int argc, char *argv[])
 
     //write data into file
     strcat(path, "espolin.ged");
-    ofstream file;
-	file.open(path);
-    if (file.is_open())
+    ofstream filestream;
+    filestream.open(path);
+    if (filestream.is_open())
     {
+        cxxtools::iconvstream file(filestream, "UTF8", "CP1252", cxxtools::iconvstreambuf::mode_skip);
         file << "0 HEAD" << endl;
         file << "1 SOUR esp2ged" << endl;
         file << "2 VERS " << version << endl;
@@ -392,9 +394,9 @@ int main(int argc, char *argv[])
         file << "2 TIME " << time.tm_hour << ":" << time.tm_min << endl; //TODO: add leading zero
         file << "1 SUBM @SUBM@" << endl;
         file << "1 GEDC" << endl;
-        file << "2 VERS 5.5" << endl;
+        file << "2 VERS 5.5.1" << endl;
         file << "2 FORM LINEAGE-LINKED" << endl;
-        file << "1 CHAR ANSI" << endl; //lifelines skilur ekki ANSI --> CP1252
+        file << "1 CHAR UTF-8" << endl;
         file << "0 @SUBM@ SUBM" << endl;
         file << "1 NAME Not Provided" << endl; //TODO: Lesa eigandann úr ES.EXE
 
