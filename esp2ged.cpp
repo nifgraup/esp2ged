@@ -485,6 +485,7 @@ int main(int argc, char *argv[])
                 if(vartala == 11)
                     vartala = 0;
                 file << vartala << (menn[i].fdag.y/100)%10 << endl;
+                file << "2 TYPE kennitala" << endl;
             }
             //Búseta
             for(int naestaabud = menn[i].abud; naestaabud != 0; naestaabud = abud[naestaabud].naestaabud)
