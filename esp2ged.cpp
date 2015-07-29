@@ -391,7 +391,11 @@ int main(int argc, char *argv[])
         file << "1 DEST ANY" << endl;
         time_t t = time(0); tm time = *localtime(&t);
         file << "1 DATE " << time.tm_mday << " " << mnames[time.tm_mon + 1] << " " << time.tm_year + 1900 << endl;
-        file << "2 TIME " << time.tm_hour << ":" << time.tm_min << endl; //TODO: add leading zero
+        file << "2 TIME " << time.tm_hour << ":";
+        if (time.tm_min < 10) {
+            file << "0";
+        }
+        file << time.tm_min << endl;
         file << "1 SUBM @SUBM@" << endl;
         file << "1 GEDC" << endl;
         file << "2 VERS 5.5.1" << endl;
